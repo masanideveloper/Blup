@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blum-like Telegram Mini App with TON Wallet</title>
+    <style>
+        body, html {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+
+        /* Loading page styles */
+        #loading-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Main page hidden until loading is complete */
+        #main-page {
+            display: none;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        /* Sticky footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            z-index: 10;
+        }
+
+        .footer div {
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .footer img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .footer span {
+            display: block;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Main content sections */
+        .section {
+            display: none;
+            padding: 20px;
+        }
+
+        .active {
+            display: block;
+        }
+
+        /* User Profile */
+        #profile {
+            margin-top: 20px;
+        }
+
+        #profile img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+        }
+
+        #profile p {
+            margin-top: 10px;
+        }
+
+        /* Task list */
+        .task {
+            background-color: #eaeaea;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .task img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .task p {
+            margin: 0;
+        }
+
+        /* Referral section */
+        .referral-info {
+            margin-top: 20px;
+        }
+
+        /* Leaderboard */
+        .leaderboard .user {
+            background-color: #fff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Wallet section */
+        .wallet-info {
+            margin-top: 20px;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            position: relative;
+            height: 30px;
+            background-color: #eaeaea;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none; /* Initially hidden */
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #76c7c0;
+            width: 0;
+            border-radius: 5px;
+            transition: width 1s linear;
+        }
+
+        .timer {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 0;
+            left: 0;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .shimmer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 75%);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: 200px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Page -->
+    <div id="loading-page">Loading...</div>
+
+    <!-- Main Content (Hidden until loading is done) -->
+    <div id="main-page">
+        <h1 id="header-title">Welcome</h1>
+
+        <!-- User Profile -->
+        <div id="profile">
+            <img id="userImage" src="" alt="User Image">
+            <p id="userName"></p>
+        </div>
+
+        <!-- Home Section -->
+        <div id="home" class="section active">
+            <h2>Your Balance: <span id="balance">0</span> Points</h2>
+            <p>Welcome to the Telegram Mini App!</p>
+
+            <!-- Farming Progress Section -->
+            <button onclick="startFarming()">Start Farming</button>
+            <div class="progress-container" id="farming-progress-container">
+                <div class="progress-bar" id="farming-progress-bar"></div>
+                <div class="timer" id="farming-timer">00:00</div>
+                <div class="shimmer"></div>
+            </div>
+            <button id="claim-button" onclick="claimRewards()" disabled>Claim Rewards</button>
+        </div>
+
+        <!-- Tasks Section -->
+        <div id="tasks" class="section">
+            <h2>Tasks</h2>
+            <div id="task-list">
+                <div class="task" onclick="window.open('https://t.me/your_telegram_channel', '_blank')">
+                    <img src="telegram-icon.png" alt="Telegram">
+                    <div>
+                        <p>Join Telegram Channel</p>
+                        <p>Points: 50</p>
+                    </div>
+                </div>
+                <div class="task" onclick="window.open('https://t.me/your_telegram_group', '_blank')">
+                    <img src="telegram-icon.png" alt="Telegram">
+                    <div>
+                        <p>Join Telegram Group</p>
+                        <p>Points: 50</p>
+                    </div>
+                </div>
+                <div class="task" onclick="window.open('https://www.youtube.com/watch?v=your_video_link', '_blank')">
+                    <img src="youtube-icon.png" alt="YouTube">
+                    <div>
+                        <p>Watch YouTube Video</p>
+                        <p>Points: 100</p>
+                    </div>
+                </div>
+                <div class="task" onclick="window.open('https://www.instagram.com/your_profile/', '_blank')">
+                    <img src="instagram-icon.png" alt="Instagram">
+                    <div>
+                        <p>Follow on Instagram</p>
+                        <p>Points: 50</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Section -->
+        <div id="referral" class="section">
+            <h2>Referral Program</h2>
+            <p>Share the referral link with your friends to earn points!</p>
+            <input type="text" id="referralLink" readonly>
+            <div class="referral-info">
+                <p>Your Telegram Account Age: <span id="telegramAge">0</span> years</p>
+                <p>Referral Bonus: <span id="referralBonus">0</span> points</p>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div id="leaderboard" class="section">
+            <h2>Leaderboard</h2>
+            <div class="leaderboard">
+                <div class="user">
+                    <span>@user1</span>
+                    <span>1200 Points</span>
+                </div>
+                <div class="user">
+                    <span>@user2</span>
+                    <span>1100 Points</span>
+                </div>
+                <div class="user">
+                    <span>@user3</span>
+                    <span>900 Points</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Section -->
+        <div id="wallet" class="section">
+            <h2>Wallet</h2>
+            <p id="walletAddress">TON Wallet Address: Not Connected</p>
+            <button onclick="connectTonWallet()">Connect TON Wallet</button>
+            <div class="wallet-info">
+                <p>Your Wallet Address: <span id="userWalletAddress"></span></p>
+                <p>Your Balance: <span id="userBalance"></span> TON</p>
+            </div>
+        </div>
+
+        <!-- Sticky Footer -->
+        <div class="footer">
+            <div onclick="switchSection('home')">
+                <img src="home-icon.png" alt="Home">
+                <span>Home</span>
+            </div>
+            <div onclick="switchSection('tasks')">
+                <img src="tasks-icon.png" alt="Tasks">
+                <span>Tasks</span>
+            </div>
+            <div onclick="switchSection('referral')">
+                <img src="referral-icon.png" alt="Referral">
+                <span>Referral</span>
+            </div>
+            <div onclick="switchSection('leaderboard')">
+                <img src="leaderboard-icon.png" alt="Leaderboard">
+                <span>Leaderboard</span>
+            </div>
+            <div onclick="switchSection('wallet')">
+                <img src="wallet-icon.png" alt="Wallet">
+                <span>Wallet</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate loading of user data
+        window.onload = function() {
+            // Simulate a delay for loading
+            setTimeout(function() {
+                document.getElementById('loading-page').style.display = 'none';
+                document.getElementById('main-page').style.display = 'block';
+                document.getElementById('userImage').src = 'user-image-url'; // Replace with dynamic user image URL
+                document.getElementById('userName').innerText = '@username'; // Replace with dynamic username
+                document.getElementById('balance').innerText = localStorage.getItem('balance') || 0; // Get balance from local storage
+                document.getElementById('telegramAge').innerText = localStorage.getItem('telegramAge') || 0; // Get account age from local storage
+                document.getElementById('referralLink').value = window.location.href; // Set referral link
+            }, 2000); // 2 seconds delay for loading
+        };
+
+        // Switch between sections
+        function switchSection(section) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => {
+                sec.classList.remove('active');
+                if (sec.id === section) {
+                    sec.classList.add('active');
+                }
+            });
+        }
+
+        // Farming function
+        let farmingInterval;
+        function startFarming() {
+            let progressBar = document.getElementById('farming-progress-bar');
+            let timer = document.getElementById('farming-timer');
+            let claimButton = document.getElementById('claim-button');
+
+            progressBar.style.width = '0%';
+            timer.innerText = '00:00';
+            document.getElementById('farming-progress-container').style.display = 'block';
+
+            let duration = 60; // Farming duration in seconds
+            let startTime = Date.now();
+
+            farmingInterval = setInterval(() => {
+                let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                let remainingTime = duration - elapsedTime;
+
+                // Update progress bar
+                progressBar.style.width = (elapsedTime / duration) * 100 + '%';
+                
+                // Update timer
+                let minutes = String(Math.floor(remainingTime / 60)).padStart(2, '0');
+                let seconds = String(remainingTime % 60).padStart(2, '0');
+                timer.innerText = `${minutes}:${seconds}`;
+
+                // Claim button enabling
+                if (remainingTime <= 0) {
+                    clearInterval(farmingInterval);
+                    claimButton.disabled = false;
+                    timer.innerText = '00:00';
+                }
+            }, 1000);
+        }
+
+        // Claim rewards function
+        function claimRewards() {
+            let currentBalance = parseInt(localStorage.getItem('balance')) || 0;
+            let rewards = 100; // Define how much to reward
+            currentBalance += rewards;
+            localStorage.setItem('balance', currentBalance);
+            document.getElementById('balance').innerText = currentBalance; // Update displayed balance
+
+            // Reset progress
+            document.getElementById('farming-progress-bar').style.width = '0%';
+            document.getElementById('claim-button').disabled = true;
+            document.getElementById('farming-progress-container').style.display = 'none';
+        }
+
+        // Connect TON Wallet function (placeholder)
+        function connectTonWallet() {
+            // Implement your TON Wallet connection logic here
+            document.getElementById('userWalletAddress').innerText = 'your-wallet-address'; // Replace with dynamic wallet address
+            document.getElementById('userBalance').innerText = '1000 TON'; // Replace with dynamic wallet balance
+        }
+    </script>
+</body>
+</html>
